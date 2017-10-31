@@ -1,0 +1,83 @@
+body{
+    margin: 0;
+    padding: 0
+}
+ul{
+    margin: 0;
+    padding: 0;
+    list-style: none
+}
+#header {
+    background: rgba(0, 0, 0, 0) url(../img/header-bg.png) repeat-x scroll 0 0;
+    height: 65px;
+    background-color: #029387;
+    width: 100%;
+    overflow: hidden;
+}
+.fleft {
+    float: left;
+}
+img {
+    vertical-align: middle;
+}
+.logo {
+    /* background: url(../images/index-logo.png) repeat scroll 0 0 rgba(0, 0, 0, 0); */
+    height: 45px;
+    margin: 17px 10px 10px 50px;
+    width: 45px;
+}
+.logo_title.fleft {
+    color: rgb(255, 255, 255);
+    font-family: "Microsoft YaHei";
+    font-size: 30px;
+    line-height: 71px;
+}
+#content .space {
+    height: 5px;
+    font-size: 0px;
+    background: #FFFFFF;
+}
+.menu {
+    border: 1px solid rgb(216, 216, 216);
+    color: rgb(7, 85, 135);
+    font-size: 14px;
+    line-height: 40px;
+    margin-left: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 163px;
+    display: inline-block;
+}
+.menu ul li {
+    text-align: center;
+}
+.menu ul {
+    background-color: #e8f9f8; 
+}
+.menu .active {
+    background: #1cb2a7;
+    
+}
+
+
+.menu ul li a {
+    height: 40px;
+    line-height: 40px;
+}
+
+a {
+    text-decoration: none;
+    color: #666666;
+    outline: none;
+}
+.active a {
+    color:#fff;
+}
+
+.layout {
+    display: inline-block;
+    float:left;
+}
+.nav-header{
+    height: 30px;
+}
