@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script type="text/javascript" src="./js/assets/jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" href="./js/assets/bootstrap/css/bootstrap.min.css">
+    <script type="text/javascript" src="./js/assets/bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.min.css">
+    <script type="text/javascript" src="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script type="text/javascript" src="./js/main.js"></script>
+    <script type="text/javascript" src="./js/replace_alert.js"></script>
     <link rel="stylesheet" href="./css/main.css">
     <title>
         <%=title%>
@@ -24,21 +32,169 @@
         </div>
     </header>
     <div id="content">
-        <div class="space"></div>
-        <div class="menu left" style="height:532px">
-            <ul>
-                <li>
-                    <a href="./trip_stat">行程统计</a>
-                </li>
-                <li class="active">
-                    <a href="./oil_stat">油耗统计</a>
-                </li>
-                <li>
-                    <a href="./trip_record">行程记录</a>
-                </li>
-            </ul>
+        <div class="layout1">
+            <div class="space"></div>
+            <div class="menu left" style="height:532px">
+                <ul>
+                    <li>
+                        <a href="./trip_stat">行程统计</a>
+                    </li>
+                    <li class="active">
+                        <a href="./oil_stat">油耗统计</a>
+                    </li>
+                    <li>
+                        <a href="./trip_record">行程记录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="layout" id="alerting">
+            <div class="nav-header">
+                <span class="nav-line"></span>
+                <span class="nav-font">油耗统计</span>
+            </div>
+            <div class="selectOption">
+                <div style="display:inline-block">
+                    <input id="start_time" type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                    <span>-</span>
+                    <input id="end_time" type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                </div>
+                <!-- <div>
+                        <select>
+                            <option value="0">分组项</option>
+                        </select>
+                    </div> -->
+                <select name="group_car_id" id="group_car_id">
+                    <option value="0">分组项</option>
+                </select>
+                <select name="car" id="car">
+                    <option value="0">选择车辆</option>
+                </select>
+                <select name="driver" id="driver">
+                    <option value="0">所有驾驶员</option>
+                </select>
+                <input type="button" value="查询" target="search" id="search" />
+                <div class="other_input">
+                    <input type="button" value="打印" target="print" />
+                    <input type="button" value="导出" target="derive" />
+                </div>
+            </div>
         </div>
     </div>
+    <!-- <div id="toast"></div> -->
 </body>
+<script type="text/javascript">
+    $(function () {
+        function getNowDate() {
+            let d = new Date();
+            let year = d.getFullYear();
+            let mon = d.getMonth() + 1;
+            let day = d.getDate();
+            let s = year + "-" + (mon < 10 ? ('0' + mon) : mon) + "-" + (day < 10 ? ('0' + day) : day);
+            return s;
+        }
+        var end_time = getNowDate();
+        $('#end_time').val(end_time)
+
+        function getBeforeDate(n) {
+            var n = n;
+            var d = new Date();
+            var year = d.getFullYear();
+            var mon = d.getMonth() + 1;
+            var day = d.getDate();
+            if (day <= n) {
+                if (mon > 1) {
+                    mon = mon - 1;
+                }
+                else {
+                    year = year - 1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate() - n);
+            year = d.getFullYear();
+            mon = d.getMonth() + 1;
+            day = d.getDate();
+            s = year + "-" + (mon < 10 ? ('0' + mon) : mon) + "-" + (day < 10 ? ('0' + day) : day);
+            return s;
+        }
+        // console.log(getBeforeDate(7))
+        var start_time = getBeforeDate(7);
+        $('#start_time').val(start_time)
+
+
+        $(".datepicker").datetimepicker({
+            language: "zh-CN",
+            autoclose: true,//选中之后自动隐藏日期选择框
+            format: "yyyy-mm-dd",//日期格式
+            minView: 2
+        });
+        $("#search").click(function () {
+            let option = get_sub_params();
+            getDate(option)
+            // console.log(option)
+        });
+
+        function getDate(data) {
+            $.ajax({
+                type: 'GET',
+                url: "oil_stat/getoil",
+                data: data,
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data)
+                    console.log('Success: ')
+                },
+                error: function (xhr, status, error) {
+                    console.log('Error: ' + error.message);
+                    // $('#lblResponse').html('Error connecting to the server.');
+                },
+            });
+        }
+
+        function get_sub_params() {
+            var start_time = $.trim($('#start_time').val());
+            var end_time = $.trim($('#end_time').val());
+            var car = $("#car").find('option:selected').val();
+            var driver = $("#driver").find('option:selected').val();
+            var group_car_id = $("#group_car_id").find('option:selected').val();
+            let option = {}
+
+            // var url = "";
+            if (end_time < start_time) {
+                alert('开始时间不能大于结束时间')
+                return false;
+            }
+            if (start_time !== '' && start_time !== null) {
+                // url += "&start_time=" + start_time;
+                option.start_time = start_time;
+            }
+            if (end_time !== '' && end_time !== null) {
+                // url += "&end_time=" + end_time;
+                option.end_time = end_time;
+            }
+            if (car != 0 && car !== null) {
+                // url += "&car=" + car;
+                option.car = car;
+            }
+            if (driver != 0 && driver !== null) {
+                // url += "&driver=" + driver;
+                option.driver = driver;
+            }
+            if (group_car_id != '' && group_car_id != null) {
+                // url += "&group_car_id=" + group_car_id;
+                option.group_car_id = group_car_id
+            };
+            return option;
+        }
+    });
+
+    // $(function () {
+    //     var graph_1 = echarts.init(document.getElementById("graph_1"));
+    //     var option = { "title": { "text": "车辆油耗统计", "subtext": "" }, "tooltip": { "trigger": "axis" }, "legend": { "show": "true", "data": ["平均油耗", "总油耗"] }, "toolbox": { "show": true, "feature": { "mark": { "show": true }, "dataView": { "show": true, "readOnly": false }, "magicType": { "show": true, "type": ["line", "bar"] }, "restore": { "show": true }, "saveAsImage": { "show": true } } }, "calculable": true, "xAxis": [{ "type": "category", "data": ["浙C3300"] }], "yAxis": [{ "type": "value" }], "series": [{ "name": "总油耗", "type": "bar", "data": [2.2], "markPoint": { "data": [{ "type": "max", "name": "最大值" }, { "type": "min", "name": "最小值" }] }, "markLine": { "data": [{ "type": "average", "name": "平均值" }] } }, { "name": "平均油耗", "type": "bar", "data": [13.1], "markPoint": { "data": [{ "type": "max", "name": "最大值" }, { "type": "min", "name": "最小值" }] }, "markLine": { "data": [{ "type": "average", "name": "平均值" }] } }] };
+    //     graph_1.setOption(option);
+    //     window.onresize = graph_1.resize;
+    // });
+</script>
 
 </html>

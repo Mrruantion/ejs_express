@@ -5,14 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="./css/main.css">
     <script type="text/javascript" src="./js/assets/jquery-3.2.1.min.js"></script>
     <link rel="stylesheet" href="./js/assets/bootstrap/css/bootstrap.min.css">
     <script type="text/javascript" src="./js/assets/bootstrap/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.min.css">
     <script type="text/javascript" src="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.min.js"></script>
     <script type="text/javascript" src="./js/assets/bootstrap-datetimepicker/bootstrap-datetimepicker.zh-CN.js"></script>
-
+    <script type="text/javascript" src="./js/main.js"></script>
+    <link rel="stylesheet" href="./css/main.css">
     <title>
         <%=title%>
     </title>
@@ -31,7 +31,7 @@
         </div>
     </header>
     <div id="content">
-        <div class="layout" style="width:21%">
+        <div class="layout1">
             <div class="space"></div>
             <div class="menu left" style="height:532px">
                 <ul>
@@ -48,40 +48,42 @@
             </div>
         </div>
 
-        <div class="layout" style="width:79%">
+        <div class="layout">
             <div class="nav-header">
+                <span class="nav-line"></span>
+                <span class="nav-font">行程统计</span>
+            </div>
+            <div class="selectOption">
+                <div style="display:inline-block">
+                    <input type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                    <span>-</span>
+                    <input type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                </div>
+                <select>
+                    <option value="0">分组项</option>
+                </select>
+                <select>
+                    <option value="0">选择车辆</option>
+                </select>
+                <input type="button" value="查询" target="search" />
+                <div class="other_input">
+                    <input type="button" value="打印" target="print" />
+                    <input type="button" value="导出" target="derive" />
+                </div>
 
             </div>
-            <input type="text" class="datepicker" placeholder="请选择日期" value="" />
-            <input type="text" class="datepicker2" placeholder="请选择日期" value="" />
         </div>
     </div>
 
 </body>
 <script type="text/javascript">
     $(function () {
-        // $(".datepicker").datepicker({
-        //     language: "zh-CN",
-        //     autoclose: true,//选中之后自动隐藏日期选择框
-        //     clearBtn: true,//清除按钮
-        //     todayBtn: true,//今日按钮
-        //     format: "yyyy-mm-dd"//日期格式，详见 http://bootstrap-datepicker.readthedocs.org/en/release/options.html#format
-        // });
         $(".datepicker").datetimepicker({
             language: "zh-CN",
             autoclose: true,//选中之后自动隐藏日期选择框
             format: "yyyy-mm-dd",//日期格式
             minView: 2
         });
-        $(".datepicker2").datetimepicker({
-            language: "zh-CN",
-            autoclose: true,//选中之后自动隐藏日期选择框
-            format: "yyyy-mm-dd",//日期格式
-            minView: 2
-        });
-        // $(".form_datetime").datetimepicker({
-        //     format: "dd MM yyyy - hh:ii"
-        // });
     });
 </script>
 
