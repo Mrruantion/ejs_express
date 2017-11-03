@@ -55,20 +55,43 @@
             </div>
             <div class="selectOption">
                 <div style="display:inline-block">
-                    <input type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                    <input id="start_time" type="text" class="datepicker" placeholder="请选择日期" style="width:120px" />
                     <span>-</span>
-                    <input type="text" class="datepicker" placeholder="请选择日期" value="2017-10-29" style="width:120px" />
+                    <input id="end_time" type="text" class="datepicker" placeholder="请选择日期" style="width:120px" />
                 </div>
-                <select>
+                <select class="hide">
                     <option value="0">分组项</option>
                 </select>
-                <select>
+                <select style="margin-left:10px" id="DeviceSN">
                     <option value="0">选择车辆</option>
                 </select>
-                <input type="button" value="查询" target="search" />
-                <div class="other_input">
+                <input type="button" value="查询" target="search" id="search" style="margin-left:10px" />
+                <div class="other_input hide">
                     <input type="button" value="打印" target="print" />
                     <input type="button" value="导出" target="derive" />
+                </div>
+            </div>
+            <div class="showData" id="show_data" style="margin:0 5px">
+                <div class="management-table_border">
+                    <table class="management-table">
+                        <thead>
+                            <tr>
+                                <th>车辆</th>
+                                <th>出发时间</th>
+                                <th>行驶时间(min)</th>
+                                <th>到达时间</th>
+                                <th>出发地点</th>
+                                <th>到达地点</th>
+                                <th>里程(km)</th>
+                                <th>平均车速(km/h)</th>
+                                <th>司机</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusList"></tbody>
+                    </table>
+                    <div class="inline page_center page">
+                        <div id="pagecount"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,12 +100,215 @@
 </body>
 <script type="text/javascript">
     $(function () {
+        $('.layout')[0].style.width = window.innerWidth - 185 + 'px';
+        $('.layout')[0].style.height = window.innerHeight - 68 + 'px';
+        $('#content')[0].style.height = window.innerHeight - 68 + 'px'
+        window.onresize = function () {
+            // console.log(1)
+            console.log(window.innerHeight, window.innerWidth)
+            $('.layout')[0].style.width = window.innerWidth - 185 + 'px';
+            $('.layout')[0].style.height = window.innerHeight - 68 + 'px'
+        }
+        var curPage = 1; //当前页码 
+        var total, pageSize, totalPage, Alldata; //总记录数，每页显示数，总页数,获取到的所有数据 
+        // var df = require('../config.js')
+        // console.log(df)
+        var plate = [
+            { devicesn: '971190000018', plate: '浙C1900' },
+            { devicesn: '971190000019', plate: '浙C1901' },
+            { devicesn: '971190000020', plate: '浙C1902' },
+            { devicesn: '971190000023', plate: '浙C1905' },
+            { devicesn: '971190000021', plate: '浙C1903' },
+            { devicesn: '971190000022', plate: '浙C1904' },
+        ]
+
+        function getNowDate() {
+            let d = new Date();
+            let year = d.getFullYear();
+            let mon = d.getMonth() + 1;
+            let day = d.getDate();
+            let s = year + "-" + (mon < 10 ? ('0' + mon) : mon) + "-" + (day < 10 ? ('0' + day) : day);
+            return s;
+        }
+        var end_time = getNowDate();
+        $('#end_time').val(end_time)
+        //获取前后几天时间
+        function getBeforeDate(n, now) {
+            var n = n;
+            var d = now ? new Date(now) : new Date();
+            var year = d.getFullYear();
+            var mon = d.getMonth() + 1;
+            var day = d.getDate();
+            if (day <= n) {
+                if (mon > 1) {
+                    mon = mon - 1;
+                }
+                else {
+                    year = year - 1;
+                    mon = 12;
+                }
+            }
+            d.setDate(d.getDate() - n);
+            year = d.getFullYear();
+            mon = d.getMonth() + 1;
+            day = d.getDate();
+            s = year + "-" + (mon < 10 ? ('0' + mon) : mon) + "-" + (day < 10 ? ('0' + day) : day);
+            return s;
+        }
+        // console.log(getBeforeDate(7))
+        var start_time = getBeforeDate(7);
+        $('#start_time').val(start_time)
+        let option = get_sub_params();
+        getDate(option, curPage);
+
         $(".datepicker").datetimepicker({
             language: "zh-CN",
             autoclose: true,//选中之后自动隐藏日期选择框
             format: "yyyy-mm-dd",//日期格式
             minView: 2
         });
+        $("#search").click(function () {
+            let option = get_sub_params();
+            curPage = 1
+            getDate(option, curPage)
+            // console.log(option)
+        });
+
+        function getDate(data, page) {
+            let option = { data: data, page: page - 1 }
+            console.log(option)
+            $.ajax({
+                type: 'GET',
+                url: "trip_record/get_trip",
+                data: option,
+                dataType: 'json',
+                success: function (data) {
+                    $("#statusList").empty();//清空数据区 
+                    console.log(data, 'data')
+                    total = data.total; //总记录数 
+                    pageSize = data.pageSize; //每页显示条数 
+                    curPage = page; //当前页 
+                    // totalPage = data.totalPage; //总页数 
+                    totalPage = data.totalPage ? data.totalPage : 1; //总页数
+                    data.data.forEach(ele => {
+                        data.plate.forEach((e, i) => {
+                            if (e.devicesn == ele.DeviceSN) {
+                                console.log(e.devicesn, ele.DeviceSN, i)
+                                ele.plate = data.plate[i].plate
+                            }
+                        })
+                    })
+                    console.log($("#DeviceSN")[0].children.length)
+                    if ($("#DeviceSN")[0].children.length < 2) {
+                        for (var i = 0; i < data.plate.length; i++) {
+                            // caroption += "<option value=" + data.plate[i].devicesn + ">" + data.plate[i].plate + "</option>"
+                            let caroption = "<option value=" + data.plate[i].devicesn + ">" + data.plate[i].plate + "</option>"
+                            $("#DeviceSN").append(caroption);
+                        }
+                    }
+
+                    // $("#statusList").append(trContent);
+                    for (var i = 0; i < data.data.length; i++) {
+                        let TripStartTime = data.data[i].TripEndTime.replace('+', ' ');
+                        let TripEndTime = data.data[i].TripEndTime.replace('+', ' ');
+                        let Trip_time = null;
+                        JSON.parse(data.data[i].JsonContent).forEach(e => e.DFDataStreamID == "0000E005" ? Trip_time = e.DFDataStreamValue : null)
+                        let car_speed = data.data[i].TripMileage / Trip_time * 60
+                        let trContent = " <tr>"
+                            + "<td>" + data.data[i].plate + "</td>"
+                            + "<td>" + TripStartTime + "</td>"
+                            + "<td>" + Trip_time + "</td>"
+                            + "<td>" + TripEndTime + "</td>"
+                            + "<td>" + data.data[i].latitude_start + '&nbsp;&nbsp;' + data.data[i].longitude_start + "</td>"
+                            + "<td>" + data.data[i].latitude_end + '&nbsp;&nbsp;' + data.data[i].longitude_end + "</td>"
+                            + "<td>" + data.data[i].TripMileage + "</td>"
+                            + "<td>" + car_speed.toFixed(2) + "</td>"
+                            + "<td>" + '' + "</td>"
+                            + "</tr>"
+                        $("#statusList").append(trContent);
+                    }
+                },
+                complete: function () { //生成分页条 
+                    getPageBar();
+                    fun();
+                },
+                error: function (xhr, status, error) {
+                    console.log('Error: ' + error.message);
+                },
+            });
+        }
+
+
+        function getPageBar() {
+            //页码大于最大页数 
+            if (curPage > totalPage) curPage = totalPage;
+            //页码小于1 
+            console.log(totalPage)
+            if (curPage < 1) curPage = 1;
+            pageStr = "<span>共" + total + "条</span><span>" + curPage
+                + "/" + totalPage + "</span>";
+
+            //如果是第一页 
+            if (curPage == 1) {
+                pageStr += "<span>首页</span><span>上一页</span>";
+            } else {
+                pageStr += "<span><a href='javascript:void(0)' rel='1'>首页</a></span><span><a href='javascript:void(0)' rel='" + (curPage - 1) + "'>上一页</a></span>";
+            }
+            //如果是最后页 
+            if (curPage >= totalPage) {
+                pageStr += "<span>下一页</span><span>尾页</span>";
+            } else {
+                pageStr += "<span><a href='javascript:void(0)' rel='" + (parseInt(curPage) + 1) + "'> 下一页</a></span><span><a href='javascript:void(0)' rel='" + totalPage + "'>尾页</a></span>";
+            }
+            $("#pagecount").html(pageStr);
+        }
+
+        function fun() {
+            // console.log(data, 'data')
+            $("#pagecount span a").on('click', function () {
+                var rel = $(this).attr("rel");
+                let option = get_sub_params();
+                if (rel) {
+                    getDate(option, rel)
+                }
+            });
+        }
+        function get_sub_params() {
+            var start_time = $.trim($('#start_time').val());
+            var end_time = $.trim($('#end_time').val());
+            end_time = getBeforeDate(-1, end_time)
+            var car = $("#DeviceSN").find('option:selected').val();
+            var driver = $("#driver").find('option:selected').val();
+            var group_car_id = $("#group_car_id").find('option:selected').val();
+            let option = {}
+
+            // var url = "";
+            if (end_time < start_time) {
+                alert('开始时间不能大于结束时间')
+                return false;
+            }
+            if (start_time !== '' && start_time !== null) {
+                // url += "&start_time=" + start_time;
+                option.TripStartTime = start_time;
+            }
+            if (end_time !== '' && end_time !== null) {
+                // url += "&end_time=" + end_time;
+                option.TripEndTime = end_time;
+            }
+            if (car != 0 && car !== null) {
+                // url += "&car=" + car;
+                option.DeviceSN = car;
+            }
+            // if (driver != 0 && driver !== null) {
+            //     // url += "&driver=" + driver;
+            //     option.driver = driver;
+            // }
+            // if (group_car_id != 0 && group_car_id != null) {
+            //     // url += "&group_car_id=" + group_car_id;
+            //     option.group_car_id = group_car_id
+            // };
+            return option;
+        }
     });
 </script>
 
